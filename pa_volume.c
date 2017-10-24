@@ -43,8 +43,9 @@ static void read_callback(pa_context *context,
     char buf[PA_CVOLUME_SNPRINT_MAX];
     pa_cvolume_snprint(buf, sizeof(buf), &info->volume);
     // TODO: output only if requested
-    printf("client: %s %s\n", info->name, buf);
-    if(strstr(info->name, "sink-input-by-application-name:")) {
+    if(!client) {
+      printf("client: %s %s\n", info->name, buf);
+    } else if(strstr(info->name, "sink-input-by-application-name:")) {
       if(strcmp(strchr(info->name, ':')+1, client) == 0) {
         // we found the client we are looking for, now make a new info struct
         // replacing just the volume
@@ -106,12 +107,14 @@ int main(int argc, char **argv)
 {
   // very crude, just take two arguments client name and volume (float, 1.0
   // being full volume)
-  if(argc != 3) {
+  if((argc == 2 && strcmp(argv[1], "--help") == 0) || argc > 3) {
     fprintf(stderr, "usage: %s client volume\n", argv[0]);
-    exit(1);
+    exit(0); // TODO: add exit failure
   }
-  client = argv[1];
-  volume = atof(argv[2]);
+  if(argc == 3) {
+    client = argv[1];
+    volume = atof(argv[2]);
+  }
 
   // set up callbacks to first wait for pulseaudio to become ready, then check
   // for the presence of module-stream-restore then loop over all safed states,
