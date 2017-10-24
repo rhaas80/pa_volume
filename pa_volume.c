@@ -43,24 +43,26 @@ static void read_callback(pa_context *context,
   assert(info || eol);
 
   if(info) {
-    char buf[PA_CVOLUME_SNPRINT_MAX];
-    pa_cvolume_snprint(buf, sizeof(buf), &info->volume);
-    // TODO: output only if requested
-    if(!client) {
-      printf("client: %s %s\n", info->name, buf);
-    } else if(strstr(info->name, "sink-input-by-application-name:")) {
-      if(strcmp(strchr(info->name, ':')+1, client) == 0) {
-        // we found the client we are looking for, now make a new info struct
-        // replacing just the volume
-        pa_ext_stream_restore_info new_info = *info;
-        pa_volume_t channel_volume = pa_sw_volume_from_linear(volume);
-        pa_cvolume_set(&new_info.volume, new_info.volume.channels,
-                       channel_volume);
-        // use REPLACE rather than SET to keep the other client's information
-        // intact
-        pa_operation *write_op = pa_ext_stream_restore_write(
-          context, PA_UPDATE_REPLACE, &new_info, 1, 1, NULL, NULL);
-        pa_operation_unref(write_op);
+    if(strstr(info->name, "sink-input-by-application-name:")) {
+      if(client) {
+        if(strcmp(strchr(info->name, ':')+1, client) == 0) {
+          // we found the client we are looking for, now make a new info struct
+          // replacing just the volume
+          pa_ext_stream_restore_info new_info = *info;
+          pa_volume_t channel_volume = pa_sw_volume_from_linear(volume);
+          pa_cvolume_set(&new_info.volume, new_info.volume.channels,
+                         channel_volume);
+          // use REPLACE rather than SET to keep the other client's information
+          // intact
+          pa_operation *write_op = pa_ext_stream_restore_write(
+            context, PA_UPDATE_REPLACE, &new_info, 1, 1, NULL, NULL);
+          pa_operation_unref(write_op);
+        }
+      } else {
+        // TODO: output only if requested
+        char buf[PA_CVOLUME_SNPRINT_MAX];
+        pa_cvolume_snprint(buf, sizeof(buf), &info->volume);
+        printf("client: %s %s\n", strchr(info->name, ':')+1, buf);
       }
     }
   }
