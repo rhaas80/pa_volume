@@ -33,6 +33,11 @@ exit
 static const char *client;
 static double volume = -1.;
 
+// PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
+#define CLAMP_VOLUME(v) \
+  ((v) < PA_VOLUME_MUTED ? PA_VOLUME_MUTED : \
+   (v) > PA_VOLUME_MAX ? PA_VOLUME_MAX : (v))
+
 // the actual worker that checks if we have found the client we are looking for
 // then updates its volume
 static void read_callback(pa_context *context,
@@ -55,7 +60,8 @@ static void read_callback(pa_context *context,
         // we found the client we are looking for, now make a new info struct
         // replacing just the volume
         pa_ext_stream_restore_info new_info = *info;
-        pa_volume_t channel_volume = (pa_volume_t)(volume*PA_VOLUME_NORM);
+        pa_volume_t channel_volume =
+          CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
         pa_cvolume_set(&new_info.volume, new_info.volume.channels,
                        channel_volume);
         // use REPLACE rather than SET to keep the other client's information
