@@ -31,7 +31,7 @@ exit
 #include <pulse/ext-stream-restore.h>
 
 static const char *client;
-static double volume;
+static double volume = -1.;
 
 // the actual worker that checks if we have found the client we are looking for
 // then updates its volume
@@ -44,21 +44,27 @@ static void read_callback(pa_context *context,
 
   if(info) {
     if(strstr(info->name, "sink-input-by-application-name:")) {
-      if(client) {
-        if(strcmp(strchr(info->name, ':')+1, client) == 0) {
-          // we found the client we are looking for, now make a new info struct
-          // replacing just the volume
-          pa_ext_stream_restore_info new_info = *info;
-          pa_volume_t channel_volume = (pa_volume_t)(volume*PA_VOLUME_NORM);
-          pa_cvolume_set(&new_info.volume, new_info.volume.channels,
-                         channel_volume);
-          // use REPLACE rather than SET to keep the other client's information
-          // intact
-          pa_operation *write_op = pa_ext_stream_restore_write(
-            context, PA_UPDATE_REPLACE, &new_info, 1, 1, NULL, NULL);
-          pa_operation_unref(write_op);
-        }
-      } else {
+      const int set_volume = volume >= 0. && (
+                             client &&
+                             strcmp(strchr(info->name, ':')+1, client) == 0);
+      const int show_volume = volume < 0. && (
+                              !client ||
+                              strcmp(strchr(info->name, ':')+1, client) == 0);
+
+      if(set_volume) {
+        // we found the client we are looking for, now make a new info struct
+        // replacing just the volume
+        pa_ext_stream_restore_info new_info = *info;
+        pa_volume_t channel_volume = (pa_volume_t)(volume*PA_VOLUME_NORM);
+        pa_cvolume_set(&new_info.volume, new_info.volume.channels,
+                       channel_volume);
+        // use REPLACE rather than SET to keep the other client's information
+        // intact
+        pa_operation *write_op = pa_ext_stream_restore_write(
+          context, PA_UPDATE_REPLACE, &new_info, 1, 1, NULL, NULL);
+        pa_operation_unref(write_op);
+      }
+      if(show_volume) {
         // TODO: output only if requested
         char buf[PA_VOLUME_SNPRINT_MAX];
         pa_volume_snprint(buf, sizeof(buf), pa_cvolume_avg(&info->volume));
@@ -116,10 +122,10 @@ int main(int argc, char **argv)
     fprintf(stderr, "usage: %s client volume%%\n", argv[0]);
     exit(0); // TODO: add exit failure
   }
-  if(argc == 3) {
+  if(argc >= 2)
     client = argv[1];
+  if(argc >= 3)
     volume = atof(argv[2])/100.;
-  }
 
   // set up callbacks to first wait for pulseaudio to become ready, then check
   // for the presence of module-stream-restore then loop over all safed states,
