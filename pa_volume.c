@@ -105,15 +105,15 @@ static void state_callback(pa_context *context, void *userdata) {
 
 int main(int argc, char **argv)
 {
-  // very crude, just take two arguments client name and volume (float, 1.0
+  // very crude, just take two arguments client name and volume (float, 100
   // being full volume)
   if((argc == 2 && strcmp(argv[1], "--help") == 0) || argc > 3) {
-    fprintf(stderr, "usage: %s client volume\n", argv[0]);
+    fprintf(stderr, "usage: %s client volume%%\n", argv[0]);
     exit(0); // TODO: add exit failure
   }
   if(argc == 3) {
     client = argv[1];
-    volume = atof(argv[2]);
+    volume = atof(argv[2])/100.;
   }
 
   // set up callbacks to first wait for pulseaudio to become ready, then check
