@@ -60,10 +60,11 @@ static void read_callback(pa_context *context,
         // we found the client we are looking for, now make a new info struct
         // replacing just the volume
         pa_ext_stream_restore_info new_info = *info;
+        const unsigned channels = new_info.volume.channels > 0 ?
+                                    new_info.volume.channels : PA_CHANNELS_MAX;
         pa_volume_t channel_volume =
           CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
-        pa_cvolume_set(&new_info.volume, new_info.volume.channels,
-                       channel_volume);
+        pa_cvolume_set(&new_info.volume, channels, channel_volume);
         // use REPLACE rather than SET to keep the other client's information
         // intact
         pa_operation *write_op = pa_ext_stream_restore_write(
