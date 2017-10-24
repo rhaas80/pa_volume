@@ -75,6 +75,7 @@ static void read_callback(pa_context *context,
         // TODO: output only if requested
         char buf[PA_VOLUME_SNPRINT_MAX];
         pa_volume_snprint(buf, sizeof(buf), pa_cvolume_avg(&info->volume));
+        printf("client: %s %s\n", strchr(info->name, ':')+1, buf);
       }
     }
   }
