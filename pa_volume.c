@@ -4,7 +4,7 @@ exit
 #endif
 /*
     pa_volume sets the client volume in PA's client database
-    Copyright (C) 2017 Trustees of the University of Illinois
+    Copyright (C) 2017 The Board of Trustees of the University of Illinois
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@ exit
     You should have received a copy of the GNU General Public License along
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Authors:
+      Roland Haas
 */
 #include <assert.h>
 #include <stdio.h>
