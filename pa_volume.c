@@ -69,7 +69,13 @@ static void read_callback(pa_context *context,
         // intact
         pa_operation *write_op = pa_ext_stream_restore_write(
           context, PA_UPDATE_REPLACE, &new_info, 1, 1, NULL, NULL);
-        pa_operation_unref(write_op);
+        if(write_op) {
+          pa_operation_unref(write_op);
+        } else {
+          fprintf(stderr, "pa_ext_stream_restore_write() failed: %s\n",
+                  pa_strerror(pa_context_errno(context)));
+          pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+        }
       }
       if(show_volume) {
         // TODO: output only if requested
@@ -94,7 +100,13 @@ static void test_callback(
     pa_operation *operation =
       pa_ext_stream_restore_read(context, read_callback,
                                  (pa_mainloop*)userdata);
-    pa_operation_unref(operation);
+    if(operation) {
+      pa_operation_unref(operation);
+    } else {
+      fprintf(stderr, "pa_ext_stream_restore_read() failed: %s\n",
+              pa_strerror(pa_context_errno(context)));
+      pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+    }
   }
 }
 
@@ -115,7 +127,13 @@ static void state_callback(pa_context *context, void *userdata) {
     // we need module-stream-restore so check (and wait) for it
     pa_operation *test_op = pa_ext_stream_restore_test(context, test_callback,
                                                        (pa_mainloop*)userdata);
-    pa_operation_unref(test_op);
+    if(test_op) {
+      pa_operation_unref(test_op);
+    } else {
+      fprintf(stderr, "pa_ext_stream_restore_test() failed: %s\n",
+              pa_strerror(pa_context_errno(context)));
+      pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+    }
     }
     break;
   }
@@ -137,20 +155,40 @@ int main(int argc, char **argv)
   // set up callbacks to first wait for pulseaudio to become ready, then check
   // for the presence of module-stream-restore then loop over all safed states,
   // then set new states with the new volume
+  int retval = 0;
   pa_mainloop *mainloop = pa_mainloop_new();
-  pa_mainloop_api *mainloopapi = pa_mainloop_get_api(mainloop);
-  pa_context *context = pa_context_new(mainloopapi, "Volume setter toy");
-  pa_context_connect(context, NULL, 0, NULL);
+  if(mainloop) {
+    pa_mainloop_api *mainloopapi = pa_mainloop_get_api(mainloop);
+    if(mainloopapi) {
+      pa_context *context = pa_context_new(mainloopapi, "Volume setter toy");
+      if(context) {
+        if(pa_context_connect(context, NULL, 0, NULL) >= 0) {
+          // set up callback for pulseaudio to become ready and fire off the chain of
+          // callbacks
+          pa_context_set_state_callback(context, state_callback, mainloop);
+          retval = pa_mainloop_run(mainloop, NULL);
 
-  // set up callback for pulseaudio to become ready and fire off the chain of
-  // callbacks
-  pa_context_set_state_callback(context, state_callback, mainloop);
-  int retval = pa_mainloop_run(mainloop, NULL);
-
-  // tear everything donw in reverse order
-  pa_context_disconnect(context);
-  pa_context_unref(context);
-  pa_mainloop_free(mainloop);
+          // tear everything donw in reverse order
+          pa_context_disconnect(context);
+        } else {
+          fprintf(stderr, "pa_context_connect() failed: %s\n",
+                  pa_strerror(pa_context_errno(context)));
+          retval = EXIT_FAILURE;
+        }
+        pa_context_unref(context);
+      } else {
+        fprintf(stderr, "pa_context_new() failed\n");
+        retval = EXIT_FAILURE;
+      }
+    } else {
+      fprintf(stderr, "pa_mainloop_get_api() failed\n");
+      retval = EXIT_FAILURE;
+    }
+    pa_mainloop_free(mainloop);
+  } else {
+    fprintf(stderr, "pa_mainloop_new() failed");
+    retval = EXIT_FAILURE;
+  }
 
   return retval;
 }
