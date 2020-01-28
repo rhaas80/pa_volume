@@ -31,6 +31,7 @@ exit
 #include <pulse/ext-stream-restore.h>
 
 static const char *client;
+char *server = NULL;
 static double volume = -1.;
 
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
@@ -155,14 +156,21 @@ int main(int argc, char **argv)
 {
   // very crude, just take two arguments client name and volume (float, 100
   // being full volume)
-  if((argc == 2 && strcmp(argv[1], "--help") == 0) || argc > 3) {
-    fprintf(stderr, "usage: %s client volume%%\n", argv[0]);
+  if((argc == 2 && strcmp(argv[1], "--help") == 0) || argc > 4) {
+    fprintf(stderr, "usage: %s server client volume%%\n Set Server to \"NULL\" if you are not using pulseaudio system mode", argv[0]);
     exit(0); // TODO: add exit failure
   }
-  if(argc >= 2)
-    client = argv[1];
+  if(argc >= 2){ // Server
+    if(strcmp(argv[1], "NULL") != 0) {
+      server = argv[1]; 
+    }
+  }
   if(argc >= 3)
-    volume = atof(argv[2])/100.;
+  client = argv[2];
+  if(argc >= 3)
+    volume = atof(argv[3])/100.;
+    
+
 
   // set up callbacks to first wait for pulseaudio to become ready, then check
   // for the presence of module-stream-restore then loop over all safed states,
@@ -174,7 +182,7 @@ int main(int argc, char **argv)
     if(mainloopapi) {
       pa_context *context = pa_context_new(mainloopapi, "Volume setter toy");
       if(context) {
-        if(pa_context_connect(context, NULL, 0, NULL) >= 0) {
+        if(pa_context_connect(context, server, 0, NULL) >= 0) {
           // set up callback for pulseaudio to become ready and fire off the chain of
           // callbacks
           pa_context_set_state_callback(context, state_callback, mainloop);
