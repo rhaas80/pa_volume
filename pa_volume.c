@@ -190,8 +190,27 @@ static void parse_args(int argc, char **argv)
   }
   if(optind < argc)
     client = argv[optind++];
-  if(optind < argc)
-    volume = atof(argv[optind++])/100.;
+  if(optind < argc) {
+    char *endptr = NULL;
+    volume = strtod(argv[optind], &endptr);
+    if(*endptr != '\0') {
+      if(endptr == argv[optind]) {
+        fprintf(stderr, "Invalid argument '%s' could not be read a number\n",
+                endptr);
+      } else {
+        fprintf(stderr, "Extra characters '%s' after number '%.*s'\n", endptr,
+                (int)(endptr - argv[optind]), argv[optind]);
+      }
+      exit(1);
+    }
+    if(volume < 0. || volume > 100.) {
+      fprintf(stderr, "Invalid volume %g. Must be between 0 and 100.\n",
+              volume);
+      exit(1);
+    }
+    volume /= 100.;
+    optind += 1;
+  }
   if(optind < argc) {
     while(optind < argc)
       fprintf(stderr, "extra argument '%s'\n", argv[optind++]);
