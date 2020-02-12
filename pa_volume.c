@@ -27,11 +27,13 @@ exit
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
+#include <unistd.h>
 #include <pulse/pulseaudio.h>
 #include <pulse/ext-stream-restore.h>
 
 static const char *client;
-char *server = NULL;
+static char *server = NULL;
 static double volume = -1.;
 
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
@@ -152,25 +154,55 @@ static void state_callback(pa_context *context, void *userdata) {
   }
 }
 
-int main(int argc, char **argv)
+static void usage(const char *argv0, FILE *log)
 {
-  // very crude, just take two arguments client name and volume (float, 100
-  // being full volume)
-  if((argc == 2 && strcmp(argv[1], "--help") == 0) || argc > 4) {
-    fprintf(stderr, "usage: %s server client volume%%\n Set Server to \"NULL\" if you are not using pulseaudio system mode", argv[0]);
-    exit(0); // TODO: add exit failure
-  }
-  if(argc >= 2){ // Server
-    if(strcmp(argv[1], "NULL") != 0) {
-      server = argv[1]; 
+  fprintf(log, "usage: %s [--server=server] client volume\n", argv0);
+}
+
+static void parse_args(int argc, char **argv)
+{
+  static const struct option longopts[] = {
+    {"server", required_argument, NULL, 's'},
+    {"help",   no_argument,       NULL, 'h'},
+    {0,        0,                 0,     0 },
+  };
+  static const char optstring[] = "s:h";
+
+  int opt;
+  while((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
+    switch(opt)
+    {
+      case 's':
+        server = optarg;
+        break;
+      case 'h':
+        usage(argv[0], stdout);
+        exit(0);
+        break;
+      case '?':
+        usage(argv[0], stderr); // TODO: pass in argv[optind]?
+        exit(1);
+        break;
+      default:
+        fprintf(stderr, "getopt returned character cod 0x%x??\n", opt);
+        break;
     }
   }
-  if(argc >= 3)
-  client = argv[2];
-  if(argc >= 3)
-    volume = atof(argv[3])/100.;
-    
+  if(optind < argc)
+    client = argv[optind++];
+  if(optind < argc)
+    volume = atof(argv[optind++])/100.;
+  if(optind < argc) {
+    while(optind < argc)
+      fprintf(stderr, "extra argument '%s'\n", argv[optind++]);
+    usage(argv[0], stderr);
+    exit(1);
+  }
+}
 
+int main(int argc, char **argv)
+{
+  parse_args(argc, argv);
 
   // set up callbacks to first wait for pulseaudio to become ready, then check
   // for the presence of module-stream-restore then loop over all safed states,
