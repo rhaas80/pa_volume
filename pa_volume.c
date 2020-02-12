@@ -24,6 +24,7 @@ exit
       Roland Haas
 */
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -158,9 +159,45 @@ static void state_callback(pa_context *context, void *userdata) {
   }
 }
 
-static void usage(const char *argv0, FILE *log)
+static void usage(const char *argv0, const struct option *longopts,
+                  const char *opthelp[], FILE *log)
 {
-  fprintf(log, "usage: %s [--server=server] client volume\n", argv0);
+  fprintf(log, "usage: %s [OPTIONS] [client] [volume]\n", argv0);
+  fprintf(log, "Get / set stored volume for a pulseaudio client.\n\n");
+  fprintf(log, "Examples:\n");
+  fprintf(log, "  %s paplay 50.1  # set volume of paplay to 50.1%%\n", argv0);
+  fprintf(log, "  %s paplay       # show curernt volume of paplay\n", argv0);
+  fprintf(log, "  %s              # show all client volumes\n\n", argv0);
+  fprintf(log, "Options:\n\n");
+  // computes maximum length of all option names to align output
+  int maxlen = 0;
+  for(const struct option *opt = longopts ; opt->name ; opt++) {
+    int len = strlen(longopts->name);
+    if(len > maxlen)
+      maxlen = len;
+  }
+
+  // output table of options
+  int buflen = 2*maxlen+4; // space for "--foo=FOO\0"
+  char buf[buflen];
+  for(const struct option *opt = longopts ; opt->name ; opt++) {
+    // make a string "--foo=FOO" or "--foo" for a description
+    const int starti = snprintf(buf, buflen, "--%s", opt->name);
+    assert(starti < buflen);
+    if(opt->has_arg) {
+      assert(starti < buflen);
+      buf[starti] = '=';
+      const int len = strlen(opt->name);
+      for(int i = 0 ; i < len ; i++) {
+        assert(starti + 1 + i < buflen);
+        buf[starti + 1 + i] = toupper(opt->name[i]);
+      }
+      assert(starti + 1 + len < buflen);
+      buf[starti + 1 + len] = '\0';
+    }
+    int ind = opt - longopts;
+    fprintf(log, "-%c %-*s  %s\n", opt->val, buflen-1, buf, opthelp[ind]);
+  }
 }
 
 static void parse_args(int argc, char **argv)
@@ -169,6 +206,10 @@ static void parse_args(int argc, char **argv)
     {"server", required_argument, NULL, 's'},
     {"help",   no_argument,       NULL, 'h'},
     {0,        0,                 0,     0 },
+  };
+  static const char *opthelp[] = {
+    "The name of the server to connect to",
+    "Show this help"
   };
   static const char optstring[] = "s:h";
 
@@ -180,11 +221,11 @@ static void parse_args(int argc, char **argv)
         server = optarg;
         break;
       case 'h':
-        usage(argv[0], stdout);
+        usage(argv[0], longopts, opthelp, stdout);
         exit(0);
         break;
       case '?':
-        usage(argv[0], stderr); // TODO: pass in argv[optind]?
+        usage(argv[0], longopts, opthelp, stderr); // TODO: pass in argv[optind]?
         exit(1);
         break;
       default:
@@ -218,7 +259,7 @@ static void parse_args(int argc, char **argv)
   if(optind < argc) {
     while(optind < argc)
       fprintf(stderr, "extra argument '%s'\n", argv[optind++]);
-    usage(argv[0], stderr);
+    usage(argv[0], longopts, opthelp, stderr);
     exit(1);
   }
 }
