@@ -133,9 +133,13 @@ static void state_callback(pa_context *context, void *userdata) {
   case PA_CONTEXT_CONNECTING:
   case PA_CONTEXT_AUTHORIZING:
   case PA_CONTEXT_SETTING_NAME:
-  case PA_CONTEXT_FAILED:
   case PA_CONTEXT_TERMINATED:
   default:
+    break;
+  case PA_CONTEXT_FAILED:
+    fprintf(stderr, "failed to connect: %s\n",
+            pa_strerror(pa_context_errno(context)));
+    pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
     break;
   case PA_CONTEXT_READY:
     {
