@@ -41,6 +41,9 @@ static int show_device = 0;
 
 static int client_found = 0;
 
+// version string to match man page
+#define VERSION "0.1.0"
+
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
 #define CLAMP_VOLUME(v) \
   ((v) < PA_VOLUME_MUTED ? PA_VOLUME_MUTED : \
@@ -221,8 +224,23 @@ static void usage(const char *argv0, const struct option *longopts,
       buf[starti + 1 + len] = '\0';
     }
     int ind = opt - longopts;
-    fprintf(log, "-%c %-*s  %s\n", opt->val, buflen-1, buf, opthelp[ind]);
+    if(opt->val != 0) {
+      fprintf(log, "-%c %-*s  %s\n", opt->val, buflen-1, buf, opthelp[ind]);
+    } else {
+      fprintf(log, "   %-*s  %s\n", buflen-1, buf, opthelp[ind]);
+    }
   }
+}
+
+void version(void)
+{
+  printf("pa_volume %s\n", VERSION);
+  printf("Copyright (C) 2017 The Board of Trustees of the University of Illinois\n");
+  printf("License GPLv2+: GNU GPL version 2 or later <https://gnu.org/licenses/gpl.html>.\n");
+  printf("This is free software: you are free to change and redistribute it.\n");
+  printf("There is NO WARRANTY, to the extent permitted by law.\n");
+  printf("\n");
+  printf("Written by Roland Haas.\n");
 }
 
 static void parse_args(int argc, char **argv)
@@ -231,12 +249,14 @@ static void parse_args(int argc, char **argv)
     {"show-device", no_argument, NULL, 'd'},
     {"server", required_argument, NULL, 's'},
     {"help",   no_argument,       NULL, 'h'},
+    {"version",   no_argument,    NULL, 0},
     {0,        0,                 0,     0 },
   };
   static const char *opthelp[] = {
     "Show name of sink client outputs to",
     "The name of the server to connect to",
-    "Show this help"
+    "Show this help",
+    "Output version information and exit"
   };
   char optstring[2*sizeof(longopts)/sizeof(longopts[0])];
   for(int i = 0, j = 0 ; i < sizeof(longopts)/sizeof(longopts[0]) - 1 ; i++) {
@@ -252,8 +272,8 @@ static void parse_args(int argc, char **argv)
     optstring[j] = '\0';
   }
 
-  int opt;
-  while((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
+  int opt, longidx;
+  while((opt = getopt_long(argc, argv, optstring, longopts, &longidx)) != -1) {
     switch(opt)
     {
       case 'd':
@@ -266,12 +286,23 @@ static void parse_args(int argc, char **argv)
         usage(argv[0], longopts, opthelp, stdout);
         exit(PAVO_EXIT_SUCCESS);
         break;
+      case 0: // long option only
+        if(strcmp(longopts[longidx].name, "version") == 0) {
+          version();
+          exit(PAVO_EXIT_SUCCESS);
+        } else {
+          fprintf(stderr, "unexpected long-only option '%s'\n",
+                  longopts[longidx].name);
+          exit(PAVO_EXIT_FAILURE);
+        }
+        break;
       case '?':
         usage(argv[0], longopts, opthelp, stderr); // TODO: pass in argv[optind]?
         exit(PAVO_EXIT_FAILURE);
         break;
       default:
         fprintf(stderr, "getopt returned character cod 0x%x??\n", opt);
+        exit(PAVO_EXIT_FAILURE);
         break;
     }
   }
