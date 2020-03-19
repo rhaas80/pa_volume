@@ -5,7 +5,7 @@ pa_volume is a simple tool to set the remembered volume level of pulseaudio
 clients. It requires module-stream-restore to be loaded (which is usually the
 case) to function. When called without arguments it shows all the known clients
 (running and non-running) and their remembered volume level. To set the volume
-level pass it the name of the client followed by the volume in pecent.
+level pass it the name of the client followed by the volume in percent.
 
 ## Installation
 No configure script is provided right now, but there is a simple Makefile. You
