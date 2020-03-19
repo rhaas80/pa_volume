@@ -12,13 +12,13 @@ sink to SINK-NAME.
 
 If SINK-NAME is not given then the target sink is left unchanged.
 
-If VOLUME is not given, the the current volume is reported.
+If VOLUME is not given, then the current volume is reported.
 
 If CLIENT is not given, volumes for all clients are reported.
 
 Mandatory arguments to long options are mandatory for short options too.
 
-**`-d`, `--show-device=SINK-NAME`**
+**`-d`, `--show-device`**
 
 : Show name of sink client outputs to
 
@@ -53,7 +53,7 @@ Set volume of paplay to 50.1%
 
     pa_volume paplay 50.1
 
-Show curernt volume of paplay
+Show current volume of paplay
 
     pa_volume paplay
 
