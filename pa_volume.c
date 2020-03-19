@@ -94,9 +94,12 @@ static void read_callback(pa_context *context,
         }
       }
       if(show_volume) {
-        // TODO: output only if requested
         char buf[PA_VOLUME_SNPRINT_MAX];
-        pa_volume_snprint(buf, sizeof(buf), pa_cvolume_avg(&info->volume));
+        if(info->channel_map.channels != 0) {
+          pa_volume_snprint(buf, sizeof(buf), pa_cvolume_avg(&info->volume));
+        } else {
+          pa_volume_snprint(buf, sizeof(buf), PA_VOLUME_NORM);
+        }
         printf("client: %s %s\n", strchr(info->name, ':')+1, buf);
       }
     }
