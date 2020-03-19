@@ -37,6 +37,7 @@ static const char *client;
 static char *server = NULL;
 static double volume = -1.;
 static const char *device = NULL;
+static int show_device = 0;
 
 static int client_found = 0;
 
@@ -108,7 +109,12 @@ static void read_callback(pa_context *context,
         } else {
           pa_volume_snprint(buf, sizeof(buf), PA_VOLUME_NORM);
         }
-        printf("client: %s %s\n", strchr(info->name, ':')+1, buf);
+        if(show_device) {
+          printf("client: %s %s [%s]\n", strchr(info->name, ':')+1, buf,
+                 info->device ? info->device : "default");
+        } else {
+          printf("client: %s %s\n", strchr(info->name, ':')+1, buf);
+        }
       }
     }
   }
@@ -217,11 +223,13 @@ static void usage(const char *argv0, const struct option *longopts,
 static void parse_args(int argc, char **argv)
 {
   static const struct option longopts[] = {
+    {"show-device", no_argument, NULL, 'd'},
     {"server", required_argument, NULL, 's'},
     {"help",   no_argument,       NULL, 'h'},
     {0,        0,                 0,     0 },
   };
   static const char *opthelp[] = {
+    "Show name of sink client outputs to",
     "The name of the server to connect to",
     "Show this help"
   };
@@ -243,6 +251,9 @@ static void parse_args(int argc, char **argv)
   while((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
     switch(opt)
     {
+      case 'd':
+        show_device = 1;
+        break;
       case 's':
         server = optarg;
         break;
