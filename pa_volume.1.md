@@ -1,4 +1,4 @@
-% PA_VOLUME(1) 0.1 | Set remembered PulseAudio volume
+% PA_VOLUME(1) 0.1.0 | Set remembered PulseAudio volume
 
 ## NAME
 pa_volume - set remembered PulseAudio volume
@@ -29,6 +29,10 @@ Mandatory arguments to long options are mandatory for short options too.
 **`-h`, `--help`**
 
 : Show this help
+
+**`--version`**
+
+: Show copyright notice and version information
 
 ### Exit status:
 0
