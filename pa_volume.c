@@ -283,7 +283,7 @@ int main(int argc, char **argv)
   // set up callbacks to first wait for pulseaudio to become ready, then check
   // for the presence of module-stream-restore then loop over all safed states,
   // then set new states with the new volume
-  int retval = 0;
+  int retval;
   pa_mainloop *mainloop = pa_mainloop_new();
   if(mainloop) {
     pa_mainloop_api *mainloopapi = pa_mainloop_get_api(mainloop);
@@ -294,7 +294,10 @@ int main(int argc, char **argv)
           // set up callback for pulseaudio to become ready and fire off the chain of
           // callbacks
           pa_context_set_state_callback(context, state_callback, mainloop);
-          retval = pa_mainloop_run(mainloop, NULL);
+          if(pa_mainloop_run(mainloop, &retval) < 0) {
+            fprintf(stderr, "pa_mainloop_run() failed\n");
+            retval = EXIT_FAILURE;
+          }
 
           // tear everything donw in reverse order
           pa_context_disconnect(context);
