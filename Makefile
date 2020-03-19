@@ -2,7 +2,7 @@ CFLAGS = -O2 -g -std=c99 -Wall
 
 HAVE_PANDOC := $(shell pandoc --version 2>/dev/null)
 
-.PHONY: all
+.PHONY: all clean
 
 all: pa_volume $(if $(HAVE_PANDOC),pa_volume.1)
 	echo "All done"
