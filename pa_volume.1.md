@@ -10,6 +10,8 @@ pa_volume [OPTIONS] [CLIENT] [VOLUME] [SINK-NAME]
 Get or set the remembered volume of CLIENT to VOLUME % and setting its target
 sink to SINK-NAME.
 
+SINK-NAME is a valid PulseAudio sink name as reported by `pacmd list-sinks`.
+
 If SINK-NAME is not given then the target sink is left unchanged.
 
 If VOLUME is not given, then the current volume is reported.
