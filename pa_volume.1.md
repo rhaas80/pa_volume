@@ -35,7 +35,10 @@ Mandatory arguments to long options are mandatory for short options too.
 : if OK,
 
 1
-: if anything failed or the specified client could not be found.
+: if the specified client could not be found,
+
+2
+: if anything failed.
 
 ## EXAMPLES
 Set volume of paplay to 66% on a PCI sound device
