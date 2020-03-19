@@ -36,6 +36,7 @@ exit
 static const char *client;
 static char *server = NULL;
 static double volume = -1.;
+static const char *device = NULL;
 
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
 #define CLAMP_VOLUME(v) \
@@ -81,6 +82,9 @@ static void read_callback(pa_context *context,
           CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
         pa_cvolume_set(&new_info.volume, new_info.volume.channels,
                        channel_volume);
+        if(device) {
+          new_info.device = device;
+        }
         // use REPLACE rather than SET to keep the other client's information
         // intact
         pa_operation *write_op = pa_ext_stream_restore_write(
@@ -165,9 +169,12 @@ static void state_callback(pa_context *context, void *userdata) {
 static void usage(const char *argv0, const struct option *longopts,
                   const char *opthelp[], FILE *log)
 {
-  fprintf(log, "usage: %s [OPTIONS] [client] [volume]\n", argv0);
+  fprintf(log, "usage: %s [OPTIONS] [client] [volume] [sink-name]\n", argv0);
   fprintf(log, "Get / set stored volume for a pulseaudio client.\n\n");
+  fprintf(log, "sink-name is the name as output by: pacmd list-sinks\n\n");
   fprintf(log, "Examples:\n");
+  fprintf(log, "  # set volume of paplay to 66%% on a PCI sound device\n");
+  fprintf(log, "  %s paplay 66 alsa_output.pci-0000_00_1f.3.analog-stereo\n", argv0);
   fprintf(log, "  %s paplay 50.1  # set volume of paplay to 50.1%%\n", argv0);
   fprintf(log, "  %s paplay       # show curernt volume of paplay\n", argv0);
   fprintf(log, "  %s              # show all client volumes\n\n", argv0);
@@ -259,6 +266,8 @@ static void parse_args(int argc, char **argv)
     volume /= 100.;
     optind += 1;
   }
+  if(optind < argc)
+    device = argv[optind++];
   if(optind < argc) {
     while(optind < argc)
       fprintf(stderr, "extra argument '%s'\n", argv[optind++]);

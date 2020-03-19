@@ -32,6 +32,3 @@ pa_volume
 ```
 will list all known clients and their rememebered volume level for each
 channel.
-
-## TODO
-* add support to change the output device in `pa_ext_stream_restore_info`
