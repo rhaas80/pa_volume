@@ -46,6 +46,11 @@ static int client_found = 0;
   ((v) < PA_VOLUME_MUTED ? PA_VOLUME_MUTED : \
    (v) > PA_VOLUME_MAX ? PA_VOLUME_MAX : (v))
 
+// exit codes used by us
+#define PAVO_EXIT_SUCCESS 0
+#define PAVO_EXIT_CLIENT_NO_FOUND 1
+#define PAVO_EXIT_FAILURE 2
+
 // the actual worker that checks if we have found the client we are looking for
 // then updates its volume
 static void read_callback(pa_context *context,
@@ -77,7 +82,7 @@ static void read_callback(pa_context *context,
         if(new_info.channel_map.channels == 0) {
           if(!pa_channel_map_init_stereo(&new_info.channel_map)) {
             fprintf(stderr, "pa_channel_map_init_stereo() faiiled\n");
-            pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+            pa_mainloop_quit((pa_mainloop*)userdata, PAVO_EXIT_FAILURE);
           }
         }
         if(new_info.volume.channels == 0) {
@@ -99,7 +104,7 @@ static void read_callback(pa_context *context,
         } else {
           fprintf(stderr, "pa_ext_stream_restore_write() failed: %s\n",
                   pa_strerror(pa_context_errno(context)));
-          pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+          pa_mainloop_quit((pa_mainloop*)userdata, PAVO_EXIT_FAILURE);
         }
       }
       if(show_volume) {
@@ -119,7 +124,7 @@ static void read_callback(pa_context *context,
     }
   }
   if(eol)
-    pa_mainloop_quit((pa_mainloop*)userdata, EXIT_SUCCESS);
+    pa_mainloop_quit((pa_mainloop*)userdata, PAVO_EXIT_SUCCESS);
 }
 
 // wait for module-stream-restore
@@ -138,7 +143,7 @@ static void test_callback(
     } else {
       fprintf(stderr, "pa_ext_stream_restore_read() failed: %s\n",
               pa_strerror(pa_context_errno(context)));
-      pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+      pa_mainloop_quit((pa_mainloop*)userdata, PAVO_EXIT_FAILURE);
     }
   }
 }
@@ -157,7 +162,7 @@ static void state_callback(pa_context *context, void *userdata) {
   case PA_CONTEXT_FAILED:
     fprintf(stderr, "failed to connect: %s\n",
             pa_strerror(pa_context_errno(context)));
-    pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+    pa_mainloop_quit((pa_mainloop*)userdata, PAVO_EXIT_FAILURE);
     break;
   case PA_CONTEXT_READY:
     {
@@ -169,7 +174,7 @@ static void state_callback(pa_context *context, void *userdata) {
     } else {
       fprintf(stderr, "pa_ext_stream_restore_test() failed: %s\n",
               pa_strerror(pa_context_errno(context)));
-      pa_mainloop_quit((pa_mainloop*)userdata, EXIT_FAILURE);
+      pa_mainloop_quit((pa_mainloop*)userdata, PAVO_EXIT_FAILURE);
     }
     }
     break;
@@ -259,11 +264,11 @@ static void parse_args(int argc, char **argv)
         break;
       case 'h':
         usage(argv[0], longopts, opthelp, stdout);
-        exit(0);
+        exit(PAVO_EXIT_SUCCESS);
         break;
       case '?':
         usage(argv[0], longopts, opthelp, stderr); // TODO: pass in argv[optind]?
-        exit(1);
+        exit(PAVO_EXIT_FAILURE);
         break;
       default:
         fprintf(stderr, "getopt returned character cod 0x%x??\n", opt);
@@ -283,12 +288,12 @@ static void parse_args(int argc, char **argv)
         fprintf(stderr, "Extra characters '%s' after number '%.*s'\n", endptr,
                 (int)(endptr - argv[optind]), argv[optind]);
       }
-      exit(1);
+      exit(PAVO_EXIT_FAILURE);
     }
     if(volume < 0. || volume > 100.) {
       fprintf(stderr, "Invalid volume %g. Must be between 0 and 100.\n",
               volume);
-      exit(1);
+      exit(PAVO_EXIT_FAILURE);
     }
     volume /= 100.;
     optind += 1;
@@ -299,7 +304,7 @@ static void parse_args(int argc, char **argv)
     while(optind < argc)
       fprintf(stderr, "extra argument '%s'\n", argv[optind++]);
     usage(argv[0], longopts, opthelp, stderr);
-    exit(1);
+    exit(PAVO_EXIT_FAILURE);
   }
 }
 
@@ -323,7 +328,7 @@ int main(int argc, char **argv)
           pa_context_set_state_callback(context, state_callback, mainloop);
           if(pa_mainloop_run(mainloop, &retval) < 0) {
             fprintf(stderr, "pa_mainloop_run() failed\n");
-            retval = EXIT_FAILURE;
+            retval = PAVO_EXIT_FAILURE;
           }
 
           // tear everything donw in reverse order
@@ -331,27 +336,27 @@ int main(int argc, char **argv)
         } else {
           fprintf(stderr, "pa_context_connect() failed: %s\n",
                   pa_strerror(pa_context_errno(context)));
-          retval = EXIT_FAILURE;
+          retval = PAVO_EXIT_FAILURE;
         }
         pa_context_unref(context);
       } else {
         fprintf(stderr, "pa_context_new() failed\n");
-        retval = EXIT_FAILURE;
+        retval = PAVO_EXIT_FAILURE;
       }
     } else {
       fprintf(stderr, "pa_mainloop_get_api() failed\n");
-      retval = EXIT_FAILURE;
+      retval = PAVO_EXIT_FAILURE;
     }
     pa_mainloop_free(mainloop);
   } else {
     fprintf(stderr, "pa_mainloop_new() failed");
-    retval = EXIT_FAILURE;
+    retval = PAVO_EXIT_FAILURE;
   }
 
-  if(retval != EXIT_FAILURE) {
+  if(retval != PAVO_EXIT_FAILURE) {
     if(client && !client_found) {
       fprintf(stderr, "Client '%s' not found.\n", client);
-      retval = EXIT_FAILURE;
+      retval = PAVO_EXIT_CLIENT_NO_FOUND;
     }
   }
 
