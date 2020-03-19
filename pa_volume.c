@@ -225,7 +225,19 @@ static void parse_args(int argc, char **argv)
     "The name of the server to connect to",
     "Show this help"
   };
-  static const char optstring[] = "s:h";
+  char optstring[2*sizeof(longopts)/sizeof(longopts[0])];
+  for(int i = 0, j = 0 ; i < sizeof(longopts)/sizeof(longopts[0]) - 1 ; i++) {
+    assert(j < sizeof(optstring));
+    optstring[j++] = (char)longopts[i].val;
+    if(longopts[i].has_arg) {
+      assert(j < sizeof(optstring));
+      optstring[j++] = ':';
+    }
+    // optstring always has space for the terminating NUL b/c of the empty
+    // entry at the end
+    assert(j < sizeof(optstring));
+    optstring[j] = '\0';
+  }
 
   int opt;
   while((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
