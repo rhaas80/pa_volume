@@ -47,7 +47,7 @@ Set volume of paplay to 66% on a PCI sound device
 
 Set volume of paplay to 50.1%
 
-    pa_volume paplay 50.
+    pa_volume paplay 50.1
 
 Show curernt volume of paplay
 
