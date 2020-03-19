@@ -38,6 +38,8 @@ static char *server = NULL;
 static double volume = -1.;
 static const char *device = NULL;
 
+static int client_found = 0;
+
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
 #define CLAMP_VOLUME(v) \
   ((v) < PA_VOLUME_MUTED ? PA_VOLUME_MUTED : \
@@ -60,6 +62,8 @@ static void read_callback(pa_context *context,
       const int show_volume = volume < 0. && (
                               !client ||
                               strcmp(strchr(info->name, ':')+1, client) == 0);
+      if(client && strcmp(strchr(info->name, ':')+1, client) == 0)
+        client_found = 1;
 
       if(set_volume) {
         // we found the client we are looking for, now make a new info struct
@@ -319,6 +323,13 @@ int main(int argc, char **argv)
   } else {
     fprintf(stderr, "pa_mainloop_new() failed");
     retval = EXIT_FAILURE;
+  }
+
+  if(retval != EXIT_FAILURE) {
+    if(client && !client_found) {
+      fprintf(stderr, "Client '%s' not found.\n", client);
+      retval = EXIT_FAILURE;
+    }
   }
 
   return retval;
