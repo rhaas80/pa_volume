@@ -42,7 +42,7 @@ static int show_device = 0;
 static int client_found = 0;
 
 // version string to match man page
-#define VERSION "0.1.0"
+#define VERSION "0.1.1"
 
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
 #define CLAMP_VOLUME(v) \
