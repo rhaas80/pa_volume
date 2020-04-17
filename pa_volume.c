@@ -64,7 +64,8 @@ static void read_callback(pa_context *context,
   assert(info || eol);
 
   if(info) {
-    if(strstr(info->name, "sink-input-by-application-name:")) {
+    if(strstr(info->name, "sink-input-by-application-name:") ||
+       strstr(info->name, "sink-input-by-media-role:")) {
       const int set_volume = volume >= 0. && (
                              client &&
                              strcmp(strchr(info->name, ':')+1, client) == 0);
