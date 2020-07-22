@@ -96,10 +96,8 @@ static void read_callback(pa_context *context,
         }
         if(toggle_mute){
           if( pa_cvolume_is_muted(&new_info.volume)){
-            fprintf(stderr, "will unmute\n");
             pa_cvolume_reset(&new_info.volume, new_info.volume.channels);
           } else {
-            fprintf(stderr, "will mute\n");
             pa_cvolume_mute(&new_info.volume, new_info.volume.channels);
           }
         } else {
