@@ -32,3 +32,8 @@ pa_volume
 ```
 will list all known clients and their rememebered volume level for each
 channel.
+
+```bash
+pa_volume paplay toggle
+```
+will toggle mute for paplay
