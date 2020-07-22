@@ -325,7 +325,6 @@ static void parse_args(int argc, char **argv)
   if(optind < argc) {
     char *endptr = NULL;
     if(strcmp(argv[optind], "toggle") == 0){
-      fprintf(stderr, "setting to toggle mute.\n");
       toggle_mute = true;
     }
     volume = strtod(argv[optind], &endptr);
