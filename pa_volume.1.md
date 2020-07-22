@@ -1,10 +1,10 @@
-% PA_VOLUME(1) 0.1.1 | Set remembered PulseAudio volume
+% PA_VOLUME(1) 0.1.2 | Set remembered PulseAudio volume
 
 ## NAME
 pa_volume - set remembered PulseAudio volume
 
 ## SYNOPSIS
-pa_volume [OPTIONS] [CLIENT] [VOLUME] [SINK-NAME]
+pa_volume [OPTIONS] [CLIENT] [VOLUME|toggle] [SINK-NAME]
 
 ## DESCRIPTION
 Get or set the remembered volume of CLIENT to VOLUME % and setting its target
@@ -14,7 +14,7 @@ SINK-NAME is a valid PulseAudio sink name as reported by `pacmd list-sinks`.
 
 If SINK-NAME is not given then the target sink is left unchanged.
 
-If VOLUME is not given, then the current volume is reported.
+If VOLUME or "toggle" is not given, then the current volume is reported.
 
 If CLIENT is not given, volumes for all clients are reported.
 
@@ -54,6 +54,10 @@ Set volume of paplay to 66% on a PCI sound device
 Set volume of paplay to 50.1%
 
     pa_volume paplay 50.1
+
+Toggle mute of paplay
+
+    pa_volume paplay toggle
 
 Show current volume of paplay
 
