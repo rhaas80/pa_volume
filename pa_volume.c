@@ -28,6 +28,7 @@ exit
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <getopt.h>
 #include <unistd.h>
 #include <pulse/pulseaudio.h>
@@ -36,6 +37,7 @@ exit
 static const char *client;
 static char *server = NULL;
 static double volume = -1.;
+static bool toggle_mute = false;
 static const char *device = NULL;
 static int show_device = 0;
 
@@ -92,10 +94,20 @@ static void read_callback(pa_context *context,
         if(new_info.volume.channels == 0) {
           new_info.volume.channels = 2;
         }
-        pa_volume_t channel_volume =
-          CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
-        pa_cvolume_set(&new_info.volume, new_info.volume.channels,
-                       channel_volume);
+        if(toggle_mute){
+          if( pa_cvolume_is_muted(&new_info.volume)){
+            fprintf(stderr, "will unmute\n");
+            pa_cvolume_reset(&new_info.volume, new_info.volume.channels);
+          } else {
+            fprintf(stderr, "will mute\n");
+            pa_cvolume_mute(&new_info.volume, new_info.volume.channels);
+          }
+        } else {
+          pa_volume_t channel_volume =
+            CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
+          pa_cvolume_set(&new_info.volume, new_info.volume.channels,
+                         channel_volume);
+        }
         if(device) {
           new_info.device = device;
         }
@@ -188,15 +200,16 @@ static void state_callback(pa_context *context, void *userdata) {
 static void usage(const char *argv0, const struct option *longopts,
                   const char *opthelp[], FILE *log)
 {
-  fprintf(log, "usage: %s [OPTIONS] [client] [volume] [sink-name]\n", argv0);
+  fprintf(log, "usage: %s [OPTIONS] [client] [volume|toggle] [sink-name]\n", argv0);
   fprintf(log, "Get / set stored volume for a pulseaudio client.\n\n");
   fprintf(log, "sink-name is the name as output by: pacmd list-sinks\n\n");
   fprintf(log, "Examples:\n");
   fprintf(log, "  # set volume of paplay to 66%% on a PCI sound device\n");
   fprintf(log, "  %s paplay 66 alsa_output.pci-0000_00_1f.3.analog-stereo\n", argv0);
-  fprintf(log, "  %s paplay 50.1  # set volume of paplay to 50.1%%\n", argv0);
-  fprintf(log, "  %s paplay       # show curernt volume of paplay\n", argv0);
-  fprintf(log, "  %s              # show all client volumes\n\n", argv0);
+  fprintf(log, "  %s paplay 50.1   # set volume of paplay to 50.1%%\n", argv0);
+  fprintf(log, "  %s paplay toggle # toggle mute status of paplay\n", argv0);
+  fprintf(log, "  %s paplay        # show curernt volume of paplay\n", argv0);
+  fprintf(log, "  %s               # show all client volumes\n\n", argv0);
   fprintf(log, "Options:\n\n");
   // computes maximum length of all option names to align output
   int maxlen = 0;
@@ -311,8 +324,12 @@ static void parse_args(int argc, char **argv)
     client = argv[optind++];
   if(optind < argc) {
     char *endptr = NULL;
+    if(strcmp(argv[optind], "toggle") == 0){
+      fprintf(stderr, "setting to toggle mute.\n");
+      toggle_mute = true;
+    }
     volume = strtod(argv[optind], &endptr);
-    if(*endptr != '\0') {
+    if(*endptr != '\0' && !toggle_mute) {
       if(endptr == argv[optind]) {
         fprintf(stderr, "Invalid argument '%s' could not be read a number\n",
                 endptr);
