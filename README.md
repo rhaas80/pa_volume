@@ -20,6 +20,10 @@ cd pa_volume/
 make
 ```
 
+### AUR
+This program is available on the AUR for Arch Linux-based distributions as
+`pa_volume-git`.
+
 ## Examples
 
 ```bash
