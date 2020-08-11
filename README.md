@@ -9,9 +9,9 @@ level pass it the name of the client followed by the volume in percent.
 
 ## Installation
 No configure script is provided right now, but there is a simple Makefile. You
-will need to have pkg-config and the development packages for libpulse installed.
-On Debian/Ubuntu based distributions this is the pkg-config and libpulse-dev
-packages.
+will need to have pkg-config and the development packages for libpulse
+installed.  To create a man page, pandoc is required. On Debian/Ubuntu based
+distributions these are the pkg-config, libpulse-dev, pandoc packages.
 
 ```bash
 sudo apt-get install pkg-config libpulse-dev
