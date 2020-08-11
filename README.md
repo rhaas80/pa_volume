@@ -36,3 +36,8 @@ pa_volume
 ```
 will list all known clients and their rememebered volume level for each
 channel.
+
+```bash
+pa_volume paplay 66 alsa_output.pci-0000_00_1f.3.analog-stereo
+```
+will set the volume of paplay to 66% on a PCI sound device
