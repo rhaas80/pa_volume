@@ -1,4 +1,4 @@
-CFLAGS = -O2 -g -std=c99 -Wall
+CFLAGS = -O2 -std=c99 -Wall
 
 HAVE_PANDOC := $(shell pandoc --version 2>/dev/null)
 
