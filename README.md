@@ -14,7 +14,7 @@ installed.  To create a man page, pandoc is required. On Debian/Ubuntu based
 distributions these are the pkg-config, libpulse-dev, pandoc packages.
 
 ```bash
-sudo apt-get install pkg-config libpulse-dev
+sudo apt-get install pkg-config libpulse-dev pandoc
 git clone https://github.com/rhaas80/pa_volume.git
 cd pa_volume/
 make
