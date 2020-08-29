@@ -46,7 +46,7 @@ static int show_device = 0;
 static int client_found = 0;
 
 // version string to match man page
-#define VERSION "0.1.1"
+#define VERSION "0.1.2"
 
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
 #define CLAMP_VOLUME(v) \
@@ -254,7 +254,7 @@ static void usage(const char *argv0, const struct option *longopts,
 void version(void)
 {
   printf("pa_volume %s\n", VERSION);
-  printf("Copyright (C) 2017 The Board of Trustees of the University of Illinois\n");
+  printf("Copyright (C) 2017 - 2020 The Board of Trustees of the University of Illinois\n");
   printf("License GPLv2+: GNU GPL version 2 or later <https://gnu.org/licenses/gpl.html>.\n");
   printf("This is free software: you are free to change and redistribute it.\n");
   printf("There is NO WARRANTY, to the extent permitted by law.\n");

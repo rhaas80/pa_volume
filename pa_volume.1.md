@@ -4,17 +4,19 @@
 pa_volume - set remembered PulseAudio volume
 
 ## SYNOPSIS
-pa_volume [OPTIONS] [CLIENT] [VOLUME|toggle] [SINK-NAME]
+pa_volume [OPTIONS] [CLIENT] [VOLUME | toggle | mute | unmute] [SINK-NAME]
 
 ## DESCRIPTION
 Get or set the remembered volume of CLIENT to VOLUME % and setting its target
-sink to SINK-NAME.
+sink to SINK-NAME. If one of toggle, mute or unmute is used instead of a VOLUME
+toggle, set or unset the mute state of the sink.
 
 SINK-NAME is a valid PulseAudio sink name as reported by `pacmd list-sinks`.
 
 If SINK-NAME is not given then the target sink is left unchanged.
 
-If VOLUME or "toggle" is not given, then the current volume is reported.
+If VOLUME or one of toggle, mute or unmute is not given, then the current
+volume is reported.
 
 If CLIENT is not given, volumes for all clients are reported.
 
@@ -75,7 +77,7 @@ Please report any bugs found on
 Roland Haas, reachable at rhaas@ncsa.illinois.edu.
 
 ## COPYRIGHT
-Copyright (C) 2017 The Board of Trustees of the University of Illinois
+Copyright (C) 2017 - 2020 The Board of Trustees of the University of Illinois
 
 ## SEE ALSO
 
