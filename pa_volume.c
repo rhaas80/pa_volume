@@ -38,6 +38,8 @@ static const char *client;
 static char *server = NULL;
 static double volume = -1.;
 static bool toggle_mute = false;
+static bool set_mute = false;
+static bool set_nomute = false;
 static const char *device = NULL;
 static int show_device = 0;
 
@@ -68,16 +70,17 @@ static void read_callback(pa_context *context,
   if(info) {
     if(strstr(info->name, "sink-input-by-application-name:") ||
        strstr(info->name, "sink-input-by-media-role:")) {
-      const int set_volume = volume >= 0. && (
-                             client &&
-                             strcmp(strchr(info->name, ':')+1, client) == 0);
+      const int take_action = (volume > 0. || toggle_mute || set_mute ||
+                               set_nomute) &&
+                              (client &&
+                               strcmp(strchr(info->name, ':')+1, client) == 0);
       const int show_volume = volume < 0. && (
                               !client ||
                               strcmp(strchr(info->name, ':')+1, client) == 0);
       if(client && strcmp(strchr(info->name, ':')+1, client) == 0)
         client_found = 1;
 
-      if(set_volume) {
+      if(take_action) {
         // we found the client we are looking for, now make a new info struct
         // replacing just the volume
         pa_ext_stream_restore_info new_info = *info;
@@ -94,17 +97,19 @@ static void read_callback(pa_context *context,
         if(new_info.volume.channels == 0) {
           new_info.volume.channels = 2;
         }
-        if(toggle_mute){
-          if( pa_cvolume_is_muted(&new_info.volume)){
-            pa_cvolume_reset(&new_info.volume, new_info.volume.channels);
-          } else {
-            pa_cvolume_mute(&new_info.volume, new_info.volume.channels);
-          }
-        } else {
+        if(volume >= 0.) {
           pa_volume_t channel_volume =
             CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
           pa_cvolume_set(&new_info.volume, new_info.volume.channels,
                          channel_volume);
+        } else if(toggle_mute) {
+          new_info.mute = !new_info.mute;
+        } else if(set_mute) {
+          new_info.mute = 1;
+        } else if(set_nomute) {
+          new_info.mute = 0;
+        } else {
+          assert(0 && "Internal error: unexpected action");
         }
         if(device) {
           new_info.device = device;
@@ -129,10 +134,12 @@ static void read_callback(pa_context *context,
           pa_volume_snprint(buf, sizeof(buf), PA_VOLUME_NORM);
         }
         if(show_device) {
-          printf("client: %s %s [%s]\n", strchr(info->name, ':')+1, buf,
-                 info->device ? info->device : "default");
+          printf("client: %s %s [%s]%s\n", strchr(info->name, ':')+1, buf,
+                 info->device ? info->device : "default",
+                 info->mute ? " (muted)" : "");
         } else {
-          printf("client: %s %s\n", strchr(info->name, ':')+1, buf);
+          printf("client: %s %s%s\n", strchr(info->name, ':')+1, buf,
+                 info->mute ? " (muted)" : "");
         }
       }
     }
@@ -322,26 +329,32 @@ static void parse_args(int argc, char **argv)
     client = argv[optind++];
   if(optind < argc) {
     char *endptr = NULL;
-    if(strcmp(argv[optind], "toggle") == 0){
+    if(strcmp(argv[optind], "toggle") == 0) {
       toggle_mute = true;
-    }
-    volume = strtod(argv[optind], &endptr);
-    if(*endptr != '\0' && !toggle_mute) {
-      if(endptr == argv[optind]) {
-        fprintf(stderr, "Invalid argument '%s' could not be read a number\n",
-                endptr);
-      } else {
-        fprintf(stderr, "Extra characters '%s' after number '%.*s'\n", endptr,
-                (int)(endptr - argv[optind]), argv[optind]);
+    } else if(strcmp(argv[optind], "mute") == 0) {
+      set_mute = true;
+    } else if(strcmp(argv[optind], "unmute") == 0) {
+      set_nomute = true;
+    } else {
+      volume = strtod(argv[optind], &endptr);
+      if(*endptr != '\0') {
+        if(endptr == argv[optind]) {
+          fprintf(stderr, "Invalid argument '%s' could not be read a number\n",
+                  endptr);
+        } else {
+          fprintf(stderr, "Extra characters '%s' after number '%.*s'\n", endptr,
+                  (int)(endptr - argv[optind]), argv[optind]);
+        }
+        exit(PAVO_EXIT_FAILURE);
       }
-      exit(PAVO_EXIT_FAILURE);
+      if(volume < 0. || volume > 100.) {
+        fprintf(stderr, "Invalid volume %g. Must be between 0 and 100.\n",
+                volume);
+        exit(PAVO_EXIT_FAILURE);
+      }
+      volume /= 100.;
     }
-    if(volume < 0. || volume > 100.) {
-      fprintf(stderr, "Invalid volume %g. Must be between 0 and 100.\n",
-              volume);
-      exit(PAVO_EXIT_FAILURE);
-    }
-    volume /= 100.;
+    assert(toggle_mute + set_mute + set_nomute + (volume >= 0.) == 1);
     optind += 1;
   }
   if(optind < argc)
