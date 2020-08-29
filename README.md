@@ -41,3 +41,8 @@ channel.
 pa_volume paplay 66 alsa_output.pci-0000_00_1f.3.analog-stereo
 ```
 will set the volume of paplay to 66% on a PCI sound device
+
+```bash
+pa_volume paplay toggle
+```
+will toggle mute for paplay
