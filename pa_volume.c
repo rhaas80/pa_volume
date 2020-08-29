@@ -47,7 +47,7 @@ static int show_device = 0;
 static int client_found = 0;
 
 // version string to match man page
-#define VERSION "0.1.2"
+#define VERSION "0.1.3"
 
 // PA_CLAMP_VOLUME fails for me since PA_CLAMP_UNLIKELY is not defined
 #define CLAMP_VOLUME(v) \
@@ -71,11 +71,12 @@ static void read_callback(pa_context *context,
   if(info) {
     if(strstr(info->name, "sink-input-by-application-name:") ||
        strstr(info->name, "sink-input-by-media-role:")) {
-      const int take_action = (volume > 0. || toggle_mute || set_mute ||
+      const int take_action = (volume >= 0. || toggle_mute || set_mute ||
                                set_nomute) &&
                               (client &&
                                strcmp(strchr(info->name, ':')+1, client) == 0);
-      const int show_volume = volume < 0. && (
+      const int show_volume = !(volume >= 0. || toggle_mute || set_mute ||
+                                set_nomute) && (
                               !client ||
                               strcmp(strchr(info->name, ':')+1, client) == 0);
       if(client && strcmp(strchr(info->name, ':')+1, client) == 0)

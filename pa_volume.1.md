@@ -1,4 +1,4 @@
-% PA_VOLUME(1) 0.1.2 | Set remembered PulseAudio volume
+% PA_VOLUME(1) 0.1.3 | Set remembered PulseAudio volume
 
 ## NAME
 pa_volume - set remembered PulseAudio volume
