@@ -4,7 +4,8 @@ exit
 #endif
 /*
     pa_volume sets the client volume in PA's client database
-    Copyright (C) 2017 The Board of Trustees of the University of Illinois
+    Copyright (C) 2017 - 2020 The Board of Trustees of the University of
+    Illinois
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
