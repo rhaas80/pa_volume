@@ -207,7 +207,7 @@ static void state_callback(pa_context *context, void *userdata) {
 static void usage(const char *argv0, const struct option *longopts,
                   const char *opthelp[], FILE *log)
 {
-  fprintf(log, "usage: %s [OPTIONS] [client] [volume|toggle] [sink-name]\n", argv0);
+  fprintf(log, "usage: %s [OPTIONS] [client] [volume|mute|unmute|toggle] [sink-name]\n", argv0);
   fprintf(log, "Get / set stored volume for a pulseaudio client.\n\n");
   fprintf(log, "sink-name is the name as output by: pacmd list-sinks\n\n");
   fprintf(log, "Examples:\n");
