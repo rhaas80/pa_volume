@@ -38,6 +38,7 @@ exit
 static const char *client;
 static char *server = NULL;
 static double volume = -1.;
+static bool relative_volume = false;
 static bool toggle_mute = false;
 static bool set_mute = false;
 static bool set_nomute = false;
@@ -71,12 +72,12 @@ static void read_callback(pa_context *context,
   if(info) {
     if(strstr(info->name, "sink-input-by-application-name:") ||
        strstr(info->name, "sink-input-by-media-role:")) {
-      const int take_action = (volume >= 0. || toggle_mute || set_mute ||
-                               set_nomute) &&
+      const int take_action = (volume >= 0. || relative_volume ||
+                               toggle_mute || set_mute || set_nomute) &&
                               (client &&
                                strcmp(strchr(info->name, ':')+1, client) == 0);
-      const int show_volume = !(volume >= 0. || toggle_mute || set_mute ||
-                                set_nomute) && (
+      const int show_volume = !(volume >= 0. || relative_volume ||
+                                toggle_mute || set_mute || set_nomute) && (
                               !client ||
                               strcmp(strchr(info->name, ':')+1, client) == 0);
       if(client && strcmp(strchr(info->name, ':')+1, client) == 0)
@@ -99,9 +100,14 @@ static void read_callback(pa_context *context,
         if(new_info.volume.channels == 0) {
           new_info.volume.channels = 2;
         }
-        if(volume >= 0.) {
-          pa_volume_t channel_volume =
-            CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
+        if(volume >= 0. || relative_volume) {
+          pa_volume_t channel_volume;
+          if (relative_volume) {
+            double curr_vol = pa_cvolume_avg(&info->volume) / (double)PA_VOLUME_NORM;
+            channel_volume = CLAMP_VOLUME((curr_vol + volume) * PA_VOLUME_NORM);
+          }
+          else
+            channel_volume = CLAMP_VOLUME((pa_volume_t)(volume*PA_VOLUME_NORM));
           pa_cvolume_set(&new_info.volume, new_info.volume.channels,
                          channel_volume);
         } else if(toggle_mute) {
@@ -338,6 +344,9 @@ static void parse_args(int argc, char **argv)
     } else if(strcmp(argv[optind], "unmute") == 0) {
       set_nomute = true;
     } else {
+      if ('-' == argv[optind][0] || '+' == argv[optind][0]) {
+        relative_volume = true;
+      }
       volume = strtod(argv[optind], &endptr);
       if(*endptr != '\0') {
         if(endptr == argv[optind]) {
@@ -349,14 +358,15 @@ static void parse_args(int argc, char **argv)
         }
         exit(PAVO_EXIT_FAILURE);
       }
-      if(volume < 0. || volume > 100.) {
+      if(!relative_volume && (volume < 0. || volume > 100.)) {
         fprintf(stderr, "Invalid volume %g. Must be between 0 and 100.\n",
                 volume);
         exit(PAVO_EXIT_FAILURE);
       }
       volume /= 100.;
     }
-    assert(toggle_mute + set_mute + set_nomute + (volume >= 0.) == 1);
+    if (!relative_volume)
+      assert(toggle_mute + set_mute + set_nomute + (volume >= 0.) == 1);
     optind += 1;
   }
   if(optind < argc)
