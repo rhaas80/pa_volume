@@ -7,7 +7,7 @@ case) to function. When called without arguments it shows all the known clients
 (running and non-running) and their remembered volume level. To set the volume
 level pass it the name of the client followed by the volume in percent.
 
-## Installation
+## Compiling
 No configure script is provided right now, but there is a simple Makefile. You
 will need to have pkg-config and the development packages for libpulse
 installed.  To create a man page, pandoc is required. On Debian/Ubuntu based
@@ -19,6 +19,11 @@ git clone https://github.com/rhaas80/pa_volume.git
 cd pa_volume/
 make
 ```
+
+You can then test the executable using `./pa_volume`.
+
+Copy the executable (`pa_volume`) and man page (`pa_volume.1`) to
+a directory in your `$PATH` and `$MANPATH`, respectively.
 
 ### AUR
 This program is available on the AUR for Arch Linux-based distributions as
