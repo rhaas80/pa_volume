@@ -29,6 +29,20 @@ a directory in your `$PATH` and `$MANPATH`, respectively.
 This program is available on the AUR for Arch Linux-based distributions as
 `pa_volume-git`.
 
+### Alpine Linux
+
+To compile and install on alpine Linux or other for Docker images these
+commands, suggested by @anvda may be used:
+
+```bash
+RUN set -ex && apk --no-cache add  build-base libpulse pulseaudio-dev make git
+RUN cd /tmp && \
+    git clone https://github.com/rhaas80/pa_volume.git && \
+    cd pa_volume && \
+    PKG_CONFIG_PATH=/usr/lib  make && \
+    cp  pa_volume /usr/local/bin
+```
+
 ## Examples
 
 ```bash
